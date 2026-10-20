@@ -29,7 +29,7 @@ October 9–13, 2026. See the [changelog](CHANGELOG.md) for details.
 
 The native sidebar and browser use the same panel code: live video, taps, mouse drags, trackpad and wheel scrolling, Refresh, Home, and screenshots copied to the Mac clipboard. Device appearance, activity effects, locking and authentication handoff remain the same. The browser service is local to the Mac connected to the phone.
 
-After successful startup or READY, agents provide a clickable phone-screen link from `browser_url`. At the start of each new phone task, proactively show the screen: reuse and reveal an existing native panel or phone page, opening one only if absent or closed. Use a sidebar browser when there is no native panel. Without a sidebar browser, provide the link and open an external browser only when requested. Do not guess the port.
+On the first use in each conversation, agents try to open or reuse a working native phone panel, or open the actual `browser_url` in a sidebar browser, and provide a clickable phone-screen link. Some hosts require a manual click to reveal the sidebar; agents do not force it. Later tasks reuse the existing entry without repeating checks, opening pages, or reminders, unless you request display or preview repair. Without a sidebar browser, provide the link and open an external browser only when requested.
 
 ```sh
 # Start a configured USB iPhone and open its browser panel
@@ -94,21 +94,22 @@ numbers. Only when an actual error identifies a compatibility issue, explain it
 and wait for my confirmation before downloading or switching Xcode. Preserve
 existing Xcode installations and the system default developer directory.
 
-After READY succeeds and at the start of each subsequent new phone task,
-proactively show the screen:
-1. Prefer and reuse a native phone panel confirmed to be working and visible. If READY does not
-   open it automatically, call pua_screen as directed by the adapter documentation.
-2. If native display is unsupported, unverified, hidden, blank, or stuck loading
-   and a sidebar browser is available, proactively open the actual browser_url
-   there. A widget card or static screenshot does not prove successful display.
-3. Without a sidebar browser, provide a clickable link. Open an external
-   browser only when I ask.
-Always include the actual browser_url as a clickable link in your reply.
-Reuse and reveal an existing panel or phone page; open one only if absent or
-closed. Confirm the user can see it, rather than relying on background navigation.
-Do not repeat READY for display or reopen after every action. Honor explicit
-requests not to show the screen. Do not guess ports or hardcode usernames,
-installation directories, or plugin versions.
+On the first use of iPhone Use in this conversation, after READY succeeds,
+try to open the phone screen once:
+1. Prefer a working native panel. If READY already opened it, do not call pua_screen again.
+2. If native display is unsupported, unverified, blank, or stuck loading and a
+   sidebar browser is available, proactively open the actual browser_url there.
+   Reuse an existing phone page when possible.
+3. Without a sidebar browser, provide a link; open an external browser only when I ask.
+After successfully opening the browser page, include this in the first reply:
+Phone screen opened in the sidebar browser: followed by a Markdown link named
+"Phone screen" targeting the actual browser_url.
+Do not force the sidebar to expand if the host cannot do it. If opening fails,
+report the actual state and provide the link instead of claiming success.
+Later tasks reuse it without visibility checks, reopening, or repeated reminders,
+unless I request display or preview repair. Both skills share this once-per-conversation
+step. Do not repeat READY or restart services for display. Honor no-screen requests.
+Do not guess ports or hardcode usernames, installation directories, or plugin versions.
 
 Finally, verify 12×34=408 in the iPhone Calculator and report installation status,
 whether both skills are loaded, and the screen display method used.

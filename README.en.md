@@ -16,6 +16,8 @@ The plugin sends anonymous usage statistics to its own PostHog project and GA4 p
 
 ## Recent updates
 
+**0.4.1: a stable root URL for the browser phone panel.** Open [http://127.0.0.1:18101/](http://127.0.0.1:18101/) by default, without a random suffix, and keep the same bookmark across service restarts.
+
 October 9–13, 2026. See the [changelog](CHANGELOG.md) for details.
 
 - **Direct preview control**: tap the image, drag with the mouse, or scroll with two fingers on a trackpad.
@@ -56,7 +58,9 @@ sh ./启动iPhone屏幕.command
 
 Each user generates their own desktop shortcut using their `$HOME` and actual installation location. Share the project rather than a personal desktop shortcut. Regenerate the shortcut after moving the installation directory.
 
-The service defaults to `127.0.0.1:18101`, selecting a free port on conflict. The returned URL contains a local access token. Repeated starts reuse the service; closing the page does not stop WDA. Both panels share operation locks and authentication pauses. See [browser commands and recovery](skills/iphone-use/references/browser.md).
+Once the browser service is running, open or bookmark [http://127.0.0.1:18101/](http://127.0.0.1:18101/). The URL has no random suffix and stays the same across restarts on that port. The page obtains its credential internally and reconnects after a restart, retaining loopback and origin checks. If another program occupies the default port, the service selects a free port; use the actual URL returned at startup or by `python3 scripts/browser.py status` in that case.
+
+Repeated starts reuse the service; closing the page does not stop WDA. Both panels share operation locks and authentication pauses. See [browser commands and recovery](skills/iphone-use/references/browser.md).
 
 The complete itemized real-device, browser, automated, and host acceptance record is in the [0.4.0 acceptance report](ACCEPTANCE-0.4.0.md).
 

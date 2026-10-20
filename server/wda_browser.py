@@ -74,8 +74,10 @@ class BrowserManager:
         record = _read_json(self.path, {})
         try:
             parsed = urlsplit(record["browser_url"])
+            # Recognize the old token URL too, so an upgrade can verify and stop
+            # its own old worker before replacing it with the stable root URL.
             if parsed.scheme != "http" or parsed.hostname != "127.0.0.1" or parsed.username \
-                    or parsed.query or parsed.fragment or parsed.path != "/" + record["token"] + "/":
+                    or parsed.query or parsed.fragment or parsed.path not in ("/", "/" + record["token"] + "/"):
                 raise ValueError("Invalid local browser record")
             health = request_json(record["browser_url"] + "health")
             if health.get("app") != APP_NAME or health.get("pid") != record["pid"] \
@@ -171,7 +173,6 @@ def make_server(runtime, token, port=DEFAULT_PORT):
     if html.count(marker) != 1:
         raise ValueError("Packaged phone screen is missing its HTML marker.")
     page = html.replace(marker, '<html lang="zh-CN" data-transport="browser">', 1).encode()
-    prefix = "/" + token + "/"
     gate = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
@@ -186,6 +187,8 @@ def make_server(runtime, token, port=DEFAULT_PORT):
             self.send_response(status)
             self.send_header("Content-Type", mime)
             self.send_header("Content-Length", str(len(body)))
+            if self.close_connection:
+                self.send_header("Connection", "close")
             self.send_header("Cache-Control", "no-store")
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("X-Content-Type-Options", "nosniff")
@@ -203,9 +206,21 @@ def make_server(runtime, token, port=DEFAULT_PORT):
         def do_GET(self):
             if not self.local():
                 self.reply(403, {"error": "Invalid host"})
-            elif self.path == prefix:
+            elif self.path == "/":
                 self.reply(200, page, "text/html; charset=utf-8")
-            elif self.path == prefix + "health":
+            elif self.path == "/session":
+                # A same-origin fetch bootstraps the per-worker credential without
+                # putting it in bookmarks, links or browser history. Cross-origin
+                # pages cannot supply this header without a CORS preflight; we
+                # never allow CORS. Also reject explicit foreign origins/sites.
+                origin = "http://127.0.0.1:" + str(self.server.server_port)
+                if self.headers.get("X-iPhone-Use") != "browser" \
+                        or self.headers.get("Origin") not in (None, origin) \
+                        or self.headers.get("Sec-Fetch-Site") not in (None, "same-origin"):
+                    self.reply(403, {"error": "Invalid browser access"})
+                else:
+                    self.reply(200, {"app": APP_NAME, "token": token})
+            elif self.path == "/health":
                 preview = runtime.screen.start() if hasattr(runtime, "screen") else {}
                 self.reply(200, {"app": APP_NAME, "pid": os.getpid(), "instance": self.server.instance,
                     "preview": {key: preview.get(key) for key in ("frame_available", "frame_age_ms", "paused", "busy")}})
@@ -219,7 +234,7 @@ def make_server(runtime, token, port=DEFAULT_PORT):
                 self.close_connection = True
                 self.reply(403, {"error": "Invalid browser access"})
                 return
-            if self.path != prefix + "api":
+            if self.path != "/api":
                 self.close_connection = True
                 self.reply(404, {"error": "Not found"})
                 return
@@ -284,7 +299,7 @@ def serve(state_dir, port=DEFAULT_PORT, base_url=None):
             server = make_server(runtime, token, 0)
         record = {"pid": os.getpid(), "token": token, "instance": server.instance,
             "revision": revision(), "binding": manager._binding()[1], "server_file": str(Path(__file__).resolve()),
-            "browser_url": "http://127.0.0.1:" + str(server.server_port) + "/" + token + "/"}
+            "browser_url": "http://127.0.0.1:" + str(server.server_port) + "/"}
         _write_json(manager.path, record)
         def stop(signum, frame):
             threading.Thread(target=server.shutdown, daemon=True).start()

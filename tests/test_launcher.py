@@ -55,7 +55,7 @@ class LauncherTests(unittest.TestCase):
     def test_startup_verifies_ready_before_opening_and_always_prints_actual_url(self):
         runtime = Mock()
         runtime.call.return_value = {"ready": True}
-        browser = {"browser_url": "http://127.0.0.1:23456/token/", "browser_opened": False}
+        browser = {"browser_url": "http://127.0.0.1:23456/", "browser_opened": False}
         output = io.StringIO()
         with contextlib.redirect_stdout(output), patch.object(launcher, "prepare_environment"), \
                 patch.object(launcher, "wda", side_effect=[{"ok": True}, {"ok": True, "devices": [self.device]}]), \

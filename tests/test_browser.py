@@ -51,7 +51,7 @@ class BrowserHTTPTests(unittest.TestCase):
         self.server.server_close()
         self.thread.join(2)
 
-    def request(self, method="POST", path="/test-token/api", data=None, headers=None, raw=None):
+    def request(self, method="POST", path="/api", data=None, headers=None, raw=None):
         connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=4)
         default = {"Origin": self.origin, "Authorization": "Bearer test-token", "Content-Type": "application/json"}
         default.update(headers or {})
@@ -65,7 +65,7 @@ class BrowserHTTPTests(unittest.TestCase):
             connection.close()
 
     def test_page_is_same_self_contained_renderer_with_browser_transport_and_headers(self):
-        status, headers, body = self.request("GET", "/test-token/")
+        status, headers, body = self.request("GET", "/")
         source = (Path(__file__).resolve().parents[1] / "assets/phone-screen.html").read_bytes()
         self.assertEqual(status, 200)
         self.assertEqual(body, source.replace(b'<html lang="zh-CN">', b'<html lang="zh-CN" data-transport="browser">', 1))
@@ -75,7 +75,7 @@ class BrowserHTTPTests(unittest.TestCase):
         self.assertEqual(self.runtime.calls, [])
 
     def test_health_and_frame_do_not_control_phone_and_frames_are_structured_only(self):
-        status, _, data = self.request("GET", "/test-token/health")
+        status, _, data = self.request("GET", "/health")
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(data)["app"], "iphone-use-browser")
         self.assertEqual(self.runtime.calls, [])
@@ -101,13 +101,31 @@ class BrowserHTTPTests(unittest.TestCase):
                         {"Authorization": "Bearer wrong"}, {"Origin": "null"}):
             with self.subTest(headers=headers):
                 self.assertEqual(self.request(headers=headers)[0], 403)
-        self.assertEqual(self.request("GET", "/test-token/", headers={"Host": "evil.example"})[0], 403)
+        self.assertEqual(self.request("GET", "/", headers={"Host": "evil.example"})[0], 403)
+        self.assertEqual(self.runtime.calls, [])
+
+    def test_session_bootstrap_requires_same_origin_custom_header_and_never_controls_phone(self):
+        for path in ("/", "/health"):
+            status, _, body = self.request("GET", path)
+            self.assertEqual(status, 200)
+            self.assertNotIn(b"test-token", body)
+        self.assertEqual(self.request("GET", "/session")[0], 403)
+        for headers in ({"Host": "evil.example"}, {"Origin": "https://evil.example"},
+                        {"Origin": "null"}, {"Sec-Fetch-Site": "cross-site"}, {"Sec-Fetch-Site": "same-site"}):
+            with self.subTest(headers=headers):
+                self.assertEqual(self.request("GET", "/session", headers={"X-iPhone-Use": "browser", **headers})[0], 403)
+        status, headers, body = self.request("GET", "/session", headers={"X-iPhone-Use": "browser", "Sec-Fetch-Site": "same-origin"})
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"app": "iphone-use-browser", "token": "test-token"})
+        self.assertEqual(headers["Cache-Control"], "no-store")
+        self.assertNotIn("Access-Control-Allow-Origin", headers)
+        self.assertEqual(self.request("OPTIONS", "/session", headers={"Origin": "https://evil.example", "Access-Control-Request-Headers": "X-iPhone-Use"})[0], 501)
         self.assertEqual(self.runtime.calls, [])
 
     def test_no_arbitrary_tools_files_or_get_mutations(self):
         for name in ("pua_type_text", "pua_setup", "pua_screen", "__dict__"):
             self.assertEqual(self.request(data={"name": name})[0], 403)
-        for path in ("/", "/wrong/", "/test-token/../../config.json", "/test-token/api"):
+        for path in ("/wrong/", "/test-token/", "/test-token/../../config.json", "/api"):
             self.assertEqual(self.request("GET", path)[0], 404)
         self.assertEqual(self.runtime.calls, [])
 
@@ -160,10 +178,33 @@ class BrowserLifecycleTests(unittest.TestCase):
         self.assertEqual(second["browser_url"], first["browser_url"])
         self.assertTrue(second["reused"])
         self.assertEqual(self.manager.path.stat().st_mode & 0o777, 0o600)
+        token = self.manager._status()["token"]
+        port = urlsplit(first["browser_url"]).port
+        self.assertEqual(first["browser_url"], "http://127.0.0.1:" + str(port) + "/")
+        self.assertNotIn("token", first)
         self.assertTrue(self.manager.stop()["stopped"])
         self.assertFalse(self.manager.status()["running"])
-        third = self.manager.start(port=0)
-        self.assertNotEqual(third["browser_url"], first["browser_url"])
+        third = self.manager.start(port=port)
+        self.assertEqual(third["browser_url"], first["browser_url"])
+        self.assertNotEqual(self.manager._status()["token"], token)
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+        try:
+            for credential, expected in ((token, 403), (self.manager._status()["token"], 200)):
+                connection.request("POST", "/api", body='{"name":"pua_screen_frame"}',
+                    headers={"Origin": "http://127.0.0.1:" + str(port), "Content-Type": "application/json", "Authorization": "Bearer " + credential})
+                response = connection.getresponse()
+                self.assertEqual(response.status, expected)
+                response.read()
+        finally:
+            connection.close()
+
+    def test_legacy_token_record_is_recognized_for_owned_worker_upgrade(self):
+        record = {"browser_url": "http://127.0.0.1:18101/old-token/", "token": "old-token", "pid": 123, "instance": "old-instance"}
+        self.manager.path.write_text(json.dumps(record))
+        with patch("wda_browser.request_json", return_value={"app": "iphone-use-browser", "pid": 123, "instance": "old-instance"}) as request:
+            self.assertTrue(self.manager.status()["running"])
+            request.assert_called_once_with(record["browser_url"] + "health")
+        self.manager.path.unlink()
 
     def test_backend_only_update_changes_worker_revision(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -234,7 +275,7 @@ class BrowserLifecycleTests(unittest.TestCase):
         try:
             connection.request("POST", target.path + "api", body=json.dumps({"name": "pua_screen_action", "arguments": {"action": "home"}}),
                 headers={"Origin": "http://" + target.netloc, "Content-Type": "application/json",
-                         "Authorization": "Bearer " + target.path.strip("/")})
+                         "Authorization": "Bearer " + manager._status()["token"]})
             response = connection.getresponse()
             self.assertFalse(json.loads(response.read())["isError"])
         finally:
@@ -273,7 +314,7 @@ class BrowserIntegrationTests(unittest.TestCase):
                     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=2)
                     try:
-                        connection.request("POST", "/shared-lock/api", body=json.dumps({"name": "pua_screen_action", "arguments": {"action": "tap", "x": 20, "y": 30, "width": 390, "height": 844}}), headers={"Origin": "http://127.0.0.1:" + str(server.server_port), "Authorization": "Bearer shared-lock", "Content-Type": "application/json"})
+                        connection.request("POST", "/api", body=json.dumps({"name": "pua_screen_action", "arguments": {"action": "tap", "x": 20, "y": 30, "width": 390, "height": 844}}), headers={"Origin": "http://127.0.0.1:" + str(server.server_port), "Authorization": "Bearer shared-lock", "Content-Type": "application/json"})
                         response = connection.getresponse()
                         result = json.loads(response.read())
                         self.assertEqual(result["structuredContent"]["error"]["code"], "device_busy")
@@ -309,7 +350,7 @@ class BrowserIntegrationTests(unittest.TestCase):
                 ("pua_screen", {}, {"frame": None}),
             ):
                 with self.subTest(name=name), patch.object(runtime, "_dispatch", return_value=result), \
-                        patch("wda_browser.BrowserManager.start", return_value={"browser_url": "http://127.0.0.1:18101/example/"}) as start:
+                        patch("wda_browser.BrowserManager.start", return_value={"browser_url": "http://127.0.0.1:18101/"}) as start:
                     self.assertIn("browser_url", runtime.call(name, args))
                     start.assert_called_once_with()
 

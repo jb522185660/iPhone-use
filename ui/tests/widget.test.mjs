@@ -85,11 +85,11 @@ async function harness({ reducedMotion = false, context = { displayMode: 'inline
     matchMedia: () => ({ matches: reducedMotion }),
     performance: { now: () => now },
     ResizeObserver: class { constructor(callback) { this.callback = callback; resize = this; } observe() {} disconnect() { this.disconnected = true; } },
-    window: { location: { href: 'http://127.0.0.1:18101/test-token/' },
+    window: { location: { href: 'http://127.0.0.1:18101/' },
       addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
     fetch: async (path, options) => {
       fetches.push({ path, options });
-      if (path.endsWith('/health')) return { ok: true, json: async () => ({ app: 'iphone-use-browser' }) };
+      if (path === '/session') return { ok: true, json: async () => ({ app: 'iphone-use-browser', token: 'test-token' }) };
       const params = JSON.parse(options.body);
       calls.push(params);
       const result = await (reply ? reply(params) : { structuredContent: preview() });
@@ -138,7 +138,7 @@ test('the real HTTP adapter runs the shared frame, coordinate and toolbar handle
   const h = await harness({ realBrowser: true, reply: params => ({ structuredContent: params.name === 'pua_screen_frame'
     ? preview({ frame: frame(), frame_available: true, viewport: { width: 400, height: 800 } })
     : { ok: true, action: params.arguments.action } }) });
-  assert.equal(h.fetches[0].path, '/test-token/health');
+  assert.equal(h.fetches[0].path, '/session');
   await h.tick();
   await flush();
   h.elements.image.onload();
@@ -154,7 +154,7 @@ test('the real HTTP adapter runs the shared frame, coordinate and toolbar handle
   const actions = h.calls.filter(call => call.name === 'pua_screen_action');
   assert.equal(JSON.stringify(actions[0].arguments), JSON.stringify({ action: 'tap', x: 100, y: 200, width: 400, height: 800 }));
   assert.equal(actions.map(call => call.arguments.action).join(','), 'tap,home,screenshot,refresh');
-  assert.ok(h.fetches.slice(1).every(({ path, options }) => path === '/test-token/api'
+  assert.ok(h.fetches.slice(1).every(({ path, options }) => path === '/api'
     && options.headers.Authorization === 'Bearer test-token'));
   assert.ok(h.calls.every(call => ['pua_screen_frame', 'pua_screen_action'].includes(call.name)));
   await h.app.onteardown();

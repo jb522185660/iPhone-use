@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 import urllib.request
+from urllib.parse import urlsplit
 import zipfile
 
 
@@ -93,6 +94,7 @@ class PackagingTests(unittest.TestCase):
                         capture_output=True, text=True, timeout=15, check=True)
                     result = json.loads(started.stdout)
                     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                    self.assertEqual(urlsplit(result['browser_url']).path, '/')
                     with opener.open(result['browser_url'], timeout=2) as response:
                         page = response.read().decode()
                     self.assertIn('data-transport="browser"', page)

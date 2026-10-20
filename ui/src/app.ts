@@ -53,7 +53,7 @@ const tools: Record<ToolName, HTMLButtonElement> = {
 };
 const app: PanelApp = document.documentElement.dataset.transport === 'browser'
   ? new BrowserApp() : new App(
-  { name: 'iPhone Use Screen', version: '0.4.0' },
+  { name: 'iPhone Use Screen', version: '0.4.1' },
   { availableDisplayModes: ['fullscreen'] },
   { autoResize: false },
 );

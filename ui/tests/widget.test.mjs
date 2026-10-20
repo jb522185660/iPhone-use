@@ -6,15 +6,17 @@ import { transform } from 'esbuild';
 
 const source = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
 const { code } = await transform(`(async () => {
-${source.replace("import { App } from '@modelcontextprotocol/ext-apps';", 'const App = globalThis.MockApp;')}
+${source.replace("import { App } from '@modelcontextprotocol/ext-apps';", 'const App = globalThis.MockApp;').replace("import { BrowserApp, type PanelApp } from './browser';", 'const BrowserApp = globalThis.MockBrowserApp;')}
 })()`, { loader: 'ts', target: 'es2022' });
+const browserSource = await readFile(new URL('../src/browser.ts', import.meta.url), 'utf8');
+const { code: browserCode } = await transform(browserSource.replace('export class BrowserApp', 'globalThis.HttpBrowserApp = class BrowserApp'), { loader: 'ts', target: 'es2022' });
 
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 const preview = (fields = {}) => ({ server_time: 1000, frame_age_ms: 0, frame: null, viewport: null, busy: false, paused: false, events: [], ...fields });
 // Fixtures exist only in this isolated DOM test, never in the shipped widget.
 const frame = (seq = 1) => ({ seq, data: 'test-image-only', mimeType: 'image/png', width: 900, height: 1800 });
 
-async function harness({ reducedMotion = false, context = { displayMode: 'inline', availableDisplayModes: ['fullscreen'] }, reply, connectReply } = {}) {
+async function harness({ reducedMotion = false, context = { displayMode: 'inline', availableDisplayModes: ['fullscreen'] }, reply, connectReply, realBrowser = false } = {}) {
   let now = 0;
   let timerId = 0;
   let instance;
@@ -22,6 +24,7 @@ async function harness({ reducedMotion = false, context = { displayMode: 'inline
   const timers = new Map();
   const listeners = new Map();
   const calls = [];
+  const fetches = [];
   const lifecycle = [];
   const requestOptions = [];
   let layoutReads = 0;
@@ -59,7 +62,7 @@ async function harness({ reducedMotion = false, context = { displayMode: 'inline
   });
   elements.image.removeAttribute = name => { if (name === 'src') imageSource = undefined; };
   class MockApp {
-    constructor(info, capabilities, options) { Object.assign(this, { info, capabilities, options }); instance = this; }
+    constructor(info = {}, capabilities = { availableDisplayModes: ['fullscreen'] }, options = { autoResize: false }) { Object.assign(this, { info, capabilities, options }); instance = this; }
     async connect() { lifecycle.push('connect'); if (connectReply) await connectReply(); }
     async close() { this.onclose?.(); }
     getHostContext() { return context; }
@@ -72,22 +75,38 @@ async function harness({ reducedMotion = false, context = { displayMode: 'inline
   }
   const document = {
     hidden: false,
-    documentElement: { dataset: {} },
+    documentElement: { dataset: realBrowser || process.env.IPHONE_USE_TEST_TRANSPORT === 'browser' ? { transport: 'browser' } : {} },
     getElementById: id => elements[id],
     addEventListener: (name, fn) => listeners.set(name, fn),
     removeEventListener: name => listeners.delete(name),
   };
-  await vm.runInNewContext(code, {
-    MockApp, document,
+  const runtime = {
+    MockApp, MockBrowserApp: MockApp, document, URL, AbortController,
     matchMedia: () => ({ matches: reducedMotion }),
     performance: { now: () => now },
     ResizeObserver: class { constructor(callback) { this.callback = callback; resize = this; } observe() {} disconnect() { this.disconnected = true; } },
-    window: { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
+    window: { location: { href: 'http://127.0.0.1:18101/test-token/' },
+      addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: name => listeners.delete(name) },
+    fetch: async (path, options) => {
+      fetches.push({ path, options });
+      if (path.endsWith('/health')) return { ok: true, json: async () => ({ app: 'iphone-use-browser' }) };
+      const params = JSON.parse(options.body);
+      calls.push(params);
+      const result = await (reply ? reply(params) : { structuredContent: preview() });
+      return { ok: true, json: async () => result };
+    },
     setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay, due: now + delay }); return id; },
     clearTimeout: id => timers.delete(id),
-  });
+  };
+  if (realBrowser) {
+    vm.runInNewContext(browserCode, runtime);
+    runtime.MockBrowserApp = class extends runtime.HttpBrowserApp {
+      constructor() { super(); instance = this; }
+    };
+  }
+  await vm.runInNewContext(code, runtime);
   return {
-    app: instance, calls, lifecycle, elements, document, timers, resize,
+    app: instance, calls, fetches, lifecycle, elements, document, timers, resize,
     requestOptions, stageSize,
     advance(ms) { now += ms; },
     get layoutReads() { return layoutReads; },
@@ -113,6 +132,32 @@ test('connects before requesting only fullscreen, then polls only the app frame 
   assert.equal(JSON.stringify(h.calls[0].arguments), '{"after_seq":0,"last_event_id":0}');
   assert.equal([...h.timers.values()][0].delay, 250);
   assert.equal(h.requestOptions[0].timeout, 3000);
+});
+
+test('the real HTTP adapter runs the shared frame, coordinate and toolbar handlers', async () => {
+  const h = await harness({ realBrowser: true, reply: params => ({ structuredContent: params.name === 'pua_screen_frame'
+    ? preview({ frame: frame(), frame_available: true, viewport: { width: 400, height: 800 } })
+    : { ok: true, action: params.arguments.action } }) });
+  assert.equal(h.fetches[0].path, '/test-token/health');
+  await h.tick();
+  await flush();
+  h.elements.image.onload();
+  h.elements.screen.handlers.get('pointerdown')(pointerEvent(60, 120));
+  h.elements.screen.handlers.get('pointerup')(pointerEvent(60, 120));
+  await flush();
+  await flush();
+  for (const action of ['home', 'screenshot', 'refresh']) {
+    h.elements['tool-' + action].click();
+    await flush();
+    await flush();
+  }
+  const actions = h.calls.filter(call => call.name === 'pua_screen_action');
+  assert.equal(JSON.stringify(actions[0].arguments), JSON.stringify({ action: 'tap', x: 100, y: 200, width: 400, height: 800 }));
+  assert.equal(actions.map(call => call.arguments.action).join(','), 'tap,home,screenshot,refresh');
+  assert.ok(h.fetches.slice(1).every(({ path, options }) => path === '/test-token/api'
+    && options.headers.Authorization === 'Bearer test-token'));
+  assert.ok(h.calls.every(call => ['pua_screen_frame', 'pua_screen_action'].includes(call.name)));
+  await h.app.onteardown();
 });
 
 test('preserves full frame aspect ratio and maps gestures using the point viewport', async () => {

@@ -24,10 +24,11 @@ from wda_apps import AppCatalog
 from wda_screen import ScreenHub
 import wda_image
 from analytics import Analytics
+from wda_environment import prepare_environment
 
 PUAError=WDAError
-VERSION="0.3.15"
-SCREEN_URI="ui://iphone-use/phone-0.3.15.html"
+VERSION="0.4.0"
+SCREEN_URI="ui://iphone-use/phone-0.4.0.html"
 # Codex scopes reuse to the host, chat, server and UI resource. A stable result
 # ID keeps repeated READY/open/pause/resume calls in that chat on one panel,
 # including after the MCP process reconnects; no device identifiers are needed.
@@ -127,6 +128,7 @@ READS.update(("screen","screen_frame"))
 DESCRIPTIONS["screen"]="Open or reuse the live iPhone screen in the Codex side panel. No phone actions or UI controls. Pause the preview before password/Face ID user takeover; resume after explicit completion. READY also opens or reuses this view by default."
 DESCRIPTIONS["screen_frame"]="App-only cached live preview and action cursor events. Never reads XML, starts sessions or occupies the phone operation lock."
 DESCRIPTIONS["screen_action"]="App-only toolbar of the live preview, pressed by the user: refresh the preview stream, send the iPhone Home, or copy a screenshot to the Mac clipboard. Refused while the preview is paused for authentication."
+DESCRIPTIONS["screen"]+=" Show browser_url link."
 
 
 def undocumented(value):
@@ -272,7 +274,8 @@ def setting(name,default,low,high):
 
 
 class Runtime:
-    def __init__(self,state_dir=None,base_url=None):
+    def __init__(self,state_dir=None,base_url=None,browser_enabled=True):
+        self.browser_enabled=browser_enabled and os.environ.get("IPHONE_USE_BROWSER","1")!="0"
         root=state_directory(state_dir)
         self.state_dir=Path(root).expanduser().resolve();self.state_dir.mkdir(mode=0o700,parents=True,exist_ok=True);self.state_dir.chmod(0o700)
         # Configuration is private runtime data, never a project file.
@@ -302,6 +305,20 @@ class Runtime:
         started=time.monotonic();data=None;error=None
         try:
             data=self._dispatch(name,args)
+            show_browser=(name=="pua_screen" and args.get("action","open")=="open") or (
+                name=="pua_ready" and data.get("ready") is True) or (
+                name=="pua_setup" and args.get("action")=="start" and data.get("ok")
+                and data.get("service",{}).get("ready") is True)
+            if show_browser and self.browser_enabled:
+                try:
+                    if self.setup_manager.config.get("udid"):
+                        from wda_browser import BrowserManager
+                        browser=BrowserManager(self.state_dir,self.base_url).start()
+                        data["browser_url"]=browser["browser_url"]
+                except Exception as exc:
+                    # The additional preview transport cannot turn a healthy
+                    # original MCP/control result into a phone-channel failure.
+                    data["browser_error"]=str(exc)
             return data
         except WDAError as exc:
             error=exc.code
@@ -515,7 +532,7 @@ class Runtime:
         except WDAError as error:
             original=error
         fault=self.channel_fault(original)
-        if fault=="foreground_unavailable":
+        if fault=="foreground_unavailable" or original.code=="invalid session id":
             # The one retry is a fresh session/source read, never a replay of
             # a click, key, submission or an element ID from an older session.
             self.client.close();self.client.session_id=None;self.phone.reset()
@@ -681,6 +698,7 @@ def tool_result(runtime,params):
 
 INSTRUCTIONS=(
  "PUA means Phone Use Agent; all iPhone Use tools use the pua_ prefix. "
+ "Successful startup, READY and screen open return browser_url: show the user a clickable phone-screen link. Keep the native panel when supported; when the user asks to see the phone and the host only supports a sidebar browser, open that actual URL there. Reuse existing pages. Otherwise provide the link, and open an external browser only when requested. browser_error does not invalidate a healthy phone control channel. "
  "Read iphone-use-setup before setup and iphone-use for tasks. First phone use in this chat: pua_setup(action=status) before any READY; reuse a ready service or active job, or start once with the existing build only if the service is confirmed stopped. start waits up to 20 seconds; pending jobs use status(job_id, wait_seconds=20), then pua_ready(recover=true, screenshot=false); only ready=true permits phone tasks, then reuse READY's observation and the healthy channel. "
  "If READY fails with pua_unreachable/not_ready, inspect pua_setup(action=status) rather than end the task: reuse an active start/recovery job, or start once from the existing config/build only if the service is confirmed stopped and startup is permitted; poll that job until service.ready=true, then READY again. Connection failure or service.ready=false alone does not prove the service is stopped. Missing config/source/build uses the setup skill. "
  "pua_timeout is not proof of disconnection: wait on the host for recovery.retry_after_seconds, then take one fresh screenshot observation, or retry READY when READY failed. Do not use pua_wait as a transport wait or immediately repeat the slow query. Bound delayed attempts by recovery.max_wait_retries; persistent timeouts use setup(status) diagnostically, not blind restart. action_uncertain retains transport_error to distinguish timeout from connection failure; never replay an uncertain action. pua_transport_error is unclassified, not proof of disconnect. "
@@ -781,6 +799,7 @@ def serve(runtime):
 
 
 def main():
+    prepare_environment()
     parser=argparse.ArgumentParser()
     parser.add_argument("--state-dir");parser.add_argument("--url");parser.add_argument("--doctor",action="store_true");parser.add_argument("--ready",action="store_true")
     args=parser.parse_args();runtime=Runtime(args.state_dir,args.url)

@@ -25,6 +25,41 @@ October 9–13, 2026. See the [changelog](CHANGELOG.md) for details.
 - **Connection recovery improvements**: clearer timeout and disconnect guidance, with automatic restoration of temporary snapshot settings.
 - **Safer long-text continuation**: input stays bound to the original field and stops when the app or focus changes.
 
+## Browser phone panel
+
+The native sidebar and browser use the same panel code: live video, taps, mouse drags, trackpad and wheel scrolling, Refresh, Home, and screenshots copied to the Mac clipboard. Device appearance, activity effects, locking and authentication handoff remain the same. The browser service is local to the Mac connected to the phone.
+
+After successful startup or READY, agents provide a clickable phone-screen link from `browser_url`. When a host lacks the native panel but has a sidebar browser, it can open that link there when the user requests a view. Otherwise, use a regular browser. Do not guess the port.
+
+```sh
+# Start a configured USB iPhone and open its browser panel
+python3 scripts/launch_screen.py
+# Start and print the URL without opening an external browser
+python3 scripts/launch_screen.py --no-open
+# Manage only the browser service; leave WDA running
+python3 scripts/browser.py start
+python3 scripts/browser.py status
+python3 scripts/browser.py stop
+```
+
+### Manually start the phone screen after installation
+
+After installing iPhone Use and completing the initial WDA signing setup, connect and unlock the iPhone, then double-click the desktop shortcut `启动iPhone屏幕.command` (Start iPhone Screen). It starts or reuses WDA, verifies READY, opens the browser panel, and prints its actual URL. One USB device is selected automatically; multiple devices prompt for a choice.
+
+This is the everyday manual startup entry. Complete plugin installation and initial signing first. The Codex installer creates or updates the desktop shortcut. For other installation methods, run `python3 scripts/launch_screen.py --install-desktop` from that installation's directory.
+
+The same [launcher](启动iPhone屏幕.command) is included at the project root in both source and plugin packages. It locates `scripts/launch_screen.py` relative to itself, supports paths containing spaces, and contains no fixed username, Codex cache location, or plugin version. Keep the full project directory together, or run from that directory:
+
+```sh
+sh ./启动iPhone屏幕.command
+```
+
+Each user generates their own desktop shortcut using their `$HOME` and actual installation location. Share the project rather than a personal desktop shortcut. Regenerate the shortcut after moving the installation directory.
+
+The service defaults to `127.0.0.1:18101`, selecting a free port on conflict. The returned URL contains a local access token. Repeated starts reuse the service; closing the page does not stop WDA. Both panels share operation locks and authentication pauses. See [browser commands and recovery](skills/iphone-use/references/browser.md).
+
+The complete itemized real-device, browser, automated, and host acceptance record is in the [0.4.0 acceptance report](ACCEPTANCE-0.4.0.md).
+
 ## Ask Codex to install it
 
 Paste this prompt into Codex running on your Mac:
@@ -56,6 +91,8 @@ author's device identifiers or signing configuration.
 Help resolve missing dependencies. If Apple account login, device trust,
 Developer Mode, or unlocking needs my input, explain the exact steps and wait
 for me to complete them before continuing.
+
+After startup, show the actual browser_url as a clickable link. If the host has no native phone panel but has a sidebar browser, use it when I request a view; do not automatically open an external browser.
 ```
 
 A reconnect may be required to load newly installed tools. Apple account login, device trust, Developer Mode, and unlocking must be completed by the device owner in the system UI. The repository is currently private; GitHub access or a source package is required.
@@ -99,6 +136,8 @@ After pua_ready returns ready=true, call pua_screen() once to show the live
 phone sidebar, then verify 12×34=408 in the iPhone Calculator.
 For Apple login, trust, Developer Mode, or unlocking, explain the steps and
 wait for me. Do not copy the author's device identifiers or signing settings.
+
+After startup, show the actual browser_url as a clickable link. If the host has no native phone panel but has a sidebar browser, use it when I request a view; do not automatically open an external browser.
 ```
 
 ### Prompt for Doubao Work
@@ -133,6 +172,8 @@ After pua_ready returns ready=true, call pua_screen() once to show the live
 phone in the right MCP App panel, then verify 12×34=408 in the iPhone Calculator.
 For Apple login, trust, Developer Mode, or unlocking, explain the steps and
 wait for me. Do not copy the author's device identifiers or signing settings.
+
+After startup, show the actual browser_url as a clickable link. If the host has no native phone panel but has a sidebar browser, use it when I request a view; do not automatically open an external browser.
 ```
 
 If tools are missing, confirm the connector is enabled and start a new chat / Local Computer task. When both hosts use the same phone, follow the shared lock's waiting guidance. See the linked host READMEs for installation, updates, and troubleshooting.
@@ -203,6 +244,7 @@ Open the target app, search for this name, and summarize the first few results.
 
 Read this list while scrolling with overlap. Deduplicate entries and state the
 covered range and any remaining uncertainty.
+
 ```
 
 Text input and submission are separate; text is not submitted by default. The model checks key screens, recipients, counts, and final results. Passwords, verification codes, and Face ID are handled by the user. While waiting for unlock or authentication, the widget retains the last preview beneath a translucent black overlay with a handoff gesture icon and the prompt “请在手机上接管操作” (take over on your phone). The overlay disappears when the preview resumes.

@@ -31,11 +31,36 @@ SOF_MARKERS = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
                0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
 
 
+def _exif_orientation(segment):
+    """Read only the bounded IFD0 orientation; never follow thumbnail pointers."""
+    if not segment.startswith(b"Exif\x00\x00"):
+        return None
+    tiff = segment[6:]
+    if len(tiff) < 8 or tiff[:2] not in (b"II", b"MM"):
+        return None
+    order = "little" if tiff[:2] == b"II" else "big"
+    if int.from_bytes(tiff[2:4], order) != 42:
+        return None
+    offset = int.from_bytes(tiff[4:8], order)
+    if not 8 <= offset <= len(tiff) - 2:
+        return None
+    count = int.from_bytes(tiff[offset:offset + 2], order)
+    for index in range(min(count, 256, (len(tiff) - offset - 2) // 12)):
+        entry = tiff[offset + 2 + index * 12:offset + 14 + index * 12]
+        if int.from_bytes(entry[:2], order) == 0x112 \
+                and int.from_bytes(entry[2:4], order) == 3 \
+                and int.from_bytes(entry[4:8], order) == 1:
+            value = int.from_bytes(entry[8:10], order)
+            return value if 1 <= value <= 8 else None
+    return None
+
+
 def jpeg_dimensions(raw):
-    """Read JPEG SOF dimensions without decoding pixels or trusting HTTP headers."""
+    """Read displayed JPEG dimensions, including iOS EXIF rotation, without decoding."""
     if not raw.startswith(b"\xff\xd8"):
         return None
     offset = 2
+    orientation = 1
     while offset + 1 < len(raw):
         if raw[offset] != 0xFF:
             return None
@@ -54,12 +79,21 @@ def jpeg_dimensions(raw):
         length = int.from_bytes(raw[offset:offset + 2], "big")
         if length < 2 or offset + length > len(raw):
             return None
+        if marker == 0xE1:
+            detected = _exif_orientation(raw[offset + 2:offset + length])
+            if detected is not None:
+                orientation = detected
         if marker in SOF_MARKERS:
             if length < 8:
                 return None
             height = int.from_bytes(raw[offset + 3:offset + 5], "big")
             width = int.from_bytes(raw[offset + 5:offset + 7], "big")
-            return (width, height) if 0 < width <= 16384 and 0 < height <= 16384 else None
+            if not (0 < width <= 16384 and 0 < height <= 16384):
+                return None
+            # Keep the original parser's early return at SOF. iOS places EXIF
+            # before SOF, so this adds display orientation without making a
+            # valid frame depend on every trailing JPEG segment being parsed.
+            return (height, width) if orientation in (5, 6, 7, 8) else (width, height)
         offset += length
     return None
 

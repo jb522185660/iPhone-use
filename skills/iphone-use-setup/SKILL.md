@@ -1,6 +1,6 @@
 ---
 name: iphone-use-setup
-description: 配置 PUA（Phone Use Agent），在用户自己的 iPhone 上安装、签名并启动手机端执行服务；本对话首次使用先直接 setup，再验 READY，服务未启动时复用配置与构建启动，诊断 USB 和 Xcode 连接并打开手机屏幕侧边栏；适用于首次配置、冷启动、断线恢复或签名过期。
+description: 配置 PUA（Phone Use Agent），在用户自己的 iPhone 上安装、签名并启动手机端执行服务；本对话首次使用先直接 setup，再验 READY，服务未启动时复用配置与构建启动，诊断 USB 和 Xcode 连接并提供原生侧栏或本机浏览器手机屏幕；适用于首次配置、冷启动、断线恢复或签名过期。
 ---
 
 # 把 iPhone 配置为 READY
@@ -59,3 +59,11 @@ READY 已返回设备、会话、视口和当前 observation，复用这些信�
 Apple 的 [开发者账户说明](https://developer.apple.com/help/account/basics/about-your-developer-account)说明 Personal Team 最多可安装 3 个 App / 设备，provisioning profile 自签发起 7 天过期，届时需要重建重装。免费账户可用于个人设备测试，不能据此承诺永久运行。
 
 [Apple 开发者模式](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device)与 [Appium 真机准备](https://appium.github.io/appium-xcuitest-driver/latest/getting-started/device-setup/)提供配对、开发模式与签名要求。流程以当前 Xcode/iOS 的实际提示和工具诊断为准；本插件不要求越狱。
+
+## 启动后的浏览器入口
+
+安装包包含 `iphone-use-setup` 和 `iphone-use` 两个技能，以及网页服务和预构建面板。按当前宿主的安装器说明启用或导入技能；不要仅因安装了服务就假定宿主已经加载技能。
+
+启动和 READY 成功后读取结果中的 `browser_url`，在回复中给出可点击的手机屏幕链接。不支持原生面板、但提供侧栏浏览器的宿主，在用户要求展示屏幕时可使用其浏览器工具打开该地址；没有侧栏浏览器就提供本机浏览器链接。已有页面优先复用，普通启动不自动弹出系统浏览器。
+
+网页服务默认仅供这台 Mac 使用，复用设备配置、PUA、操作锁和认证暂停状态。使用当前安装目录下的 `scripts/browser.py` 查询状态或启动服务，详见[浏览器面板与命令](../iphone-use/references/browser.md)。网页错误不等于 PUA 不可用，不为网页问题重复构建或重签名。

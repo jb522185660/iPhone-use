@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -54,7 +55,15 @@ def main():
     print(json.dumps(installation,ensure_ascii=False),flush=True)
     # Same name as the plugin registration: Config wins over Plugin in Codex,
     # so there is one namespace, without the shared agent-plugin tool budget.
-    subprocess.run(["codex","mcp","add","iphone_use","--","python3",str(server)],check=True)
+    launcher=root/"scripts/mcp.sh"
+    if not launcher.is_file():
+        raise SystemExit("Installed iPhone Use launcher is missing.")
+    try:
+        relative=launcher.relative_to(Path.home())
+        portable='"$HOME"/'+shlex.quote(relative.as_posix())
+    except ValueError:
+        portable=shlex.quote(str(launcher))
+    subprocess.run(["codex","mcp","add","iphone_use","--","/bin/sh","-c","exec /bin/sh "+portable],check=True)
     retire_previous_registration()
 
 

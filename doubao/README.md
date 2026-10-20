@@ -4,6 +4,10 @@
 
 这个目录叠加在原版（Codex 版）和 [WorkBuddy 版](../workbuddy/README.md) 之上，不修改两者的代码。依赖与 [安装依赖](../README.md#安装依赖) 相同：macOS、完整 Xcode、USB 连接的 iPhone、Python 3.9+、Node.js 20.19+ / 22.12+ / 24+。
 
+## 浏览器手机面板
+
+启动成功后也会返回 `browser_url`。Agent 应在回复中给出可点击的链接；不支持原生面板的宿主可按用户要求在侧栏浏览器中打开。网页和原生面板复用控制、操作锁和认证暂停规则。命令见[浏览器面板](../skills/iphone-use/references/browser.md)。
+
 ## 安装
 
 ```sh

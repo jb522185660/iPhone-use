@@ -1,4 +1,5 @@
 import { App } from '@modelcontextprotocol/ext-apps';
+import { BrowserApp, type PanelApp } from './browser';
 
 type Size = { width: number; height: number };
 type Point = { x: number; y: number };
@@ -50,8 +51,9 @@ const tools: Record<ToolName, HTMLButtonElement> = {
   home: document.getElementById('tool-home') as HTMLButtonElement,
   screenshot: document.getElementById('tool-screenshot') as HTMLButtonElement,
 };
-const app = new App(
-  { name: 'iPhone Use Screen', version: '0.3.15' },
+const app: PanelApp = document.documentElement.dataset.transport === 'browser'
+  ? new BrowserApp() : new App(
+  { name: 'iPhone Use Screen', version: '0.4.0' },
   { availableDisplayModes: ['fullscreen'] },
   { autoResize: false },
 );

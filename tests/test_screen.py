@@ -35,10 +35,40 @@ def eventually(predicate, timeout=2):
 
 
 class MJPEGTests(unittest.TestCase):
+    def test_exif_rotation_matches_browser_display_dimensions(self):
+        for order, magic in (("little", b"II"), ("big", b"MM")):
+            for orientation in range(1, 9):
+                tiff = magic + (42).to_bytes(2, order) + (8).to_bytes(4, order)
+                entry = (0x112).to_bytes(2, order) + (3).to_bytes(2, order) + (1).to_bytes(4, order)
+                entry += orientation.to_bytes(2, order) + b"\x00\x00"
+                segment = b"Exif\x00\x00" + tiff + (1).to_bytes(2, order) + entry + b"\x00" * 4
+                raw = jpeg(1170, 2532)
+                raw = raw[:2] + b"\xff\xe1" + (len(segment) + 2).to_bytes(2, "big") + segment + raw[2:]
+                expected = (2532, 1170) if orientation >= 5 else (1170, 2532)
+                with self.subTest(order=order, orientation=orientation):
+                    self.assertEqual(jpeg_dimensions(raw), expected)
+                    self.assertEqual(MJPEGParser().feed(raw), [(raw, expected)])
+                    # XMP is also APP1 and must not override valid EXIF metadata.
+                    xmp = b"http://ns.adobe.com/xap/1.0/\x00"
+                    second_app1 = b"\xff\xe1" + (len(xmp) + 2).to_bytes(2, "big") + xmp
+                    split = raw.index(b"\xff\xc0")
+                    self.assertEqual(jpeg_dimensions(raw[:split] + second_app1 + raw[split:]), expected)
+
+    def test_bad_exif_offsets_and_unrelated_app1_do_not_invent_rotation(self):
+        for segment in (b"unrelated metadata", b"Exif\x00\x00II", b"Exif\x00\x00II*\x00\xff\xff\xff\xff",
+                        b"Exif\x00\x00MM\x00*\x00\x00\x00\x08\xff\xff"):
+            raw = jpeg()
+            raw = raw[:2] + b"\xff\xe1" + (len(segment) + 2).to_bytes(2, "big") + segment + raw[2:]
+            self.assertEqual(jpeg_dimensions(raw), (440, 956))
+
     def test_dimensions_reject_malformed_and_read_nonbaseline_sof(self):
         raw = jpeg()
         self.assertEqual(jpeg_dimensions(raw), (440, 956))
         self.assertEqual(jpeg_dimensions(raw.replace(b"\xff\xc0", b"\xff\xc2")), (440, 956))
+        # Keep the pre-0.4.0 early SOF return: valid pixels remain usable even
+        # when an unrelated trailing JPEG segment is malformed.
+        trailing = raw.replace(b"\xff\xda\x00\x02", b"\xff\xe2\x00\xff")
+        self.assertEqual(jpeg_dimensions(trailing), (440, 956))
         for malformed in (b"", b"not JPEG", raw[:20], raw.replace(b"\x00\x0b", b"\xff\xff"), jpeg(width=0)):
             self.assertIsNone(jpeg_dimensions(malformed))
 

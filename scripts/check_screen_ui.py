@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check bundled module syntax and run isolated widget DOM tests."""
 from pathlib import Path
+import os
 import re
 import subprocess
 import tempfile
@@ -21,4 +22,7 @@ with tempfile.TemporaryDirectory() as directory:
     script=Path(directory)/'screen.mjs'
     script.write_text(modules[0])
     subprocess.run(['node','--check',str(script)],check=True)
-subprocess.run(['node','--test',str(root/'ui/tests/widget.test.mjs')],check=True)
+for transport in ('mcp', 'browser'):
+    subprocess.run(['node','--test',str(root/'ui/tests/widget.test.mjs')],check=True,
+                   env={**os.environ, 'IPHONE_USE_TEST_TRANSPORT': transport})
+subprocess.run(['node','--test',str(root/'ui/tests/browser.test.mjs')],check=True)

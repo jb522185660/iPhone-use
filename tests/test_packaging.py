@@ -2,10 +2,12 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.request
 import zipfile
 
 
@@ -24,7 +26,7 @@ class PackagingTests(unittest.TestCase):
         for source, rel in packaging.package_files(source_package=True):
             target = cls.root / rel
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(source.read_bytes())
+            shutil.copy2(source, target)
         # Local-only material exists on disk even when it is not Git-tracked.
         for name in ('docs/private-notes.md', 'evals/cases.json', 'plugins/experiment/private.txt'):
             target = cls.root / name
@@ -62,9 +64,15 @@ class PackagingTests(unittest.TestCase):
             rel = source.relative_to(ROOT)
             if source.is_file() and 'node_modules' not in rel.parts:
                 self.assertEqual((self.stage / rel).read_bytes(), source.read_bytes(), str(rel))
-        for name in ('assets/phone-screen.html', 'tooling/screen-stream.mjs', 'tooling/forward.mjs',
-                     'tooling/package-lock.json', 'scripts/phone.py', 'scripts/check_screen_ui.py'):
+        for name in ('启动iPhone屏幕.command', 'assets/phone-screen.html', 'tooling/screen-stream.mjs', 'tooling/forward.mjs',
+                     'tooling/package-lock.json', 'scripts/phone.py', 'scripts/check_screen_ui.py',
+                     'scripts/browser.py', 'scripts/launch_screen.py', 'scripts/mcp.sh',
+                     'server/wda_browser.py', 'server/wda_environment.py',
+                     'skills/iphone-use/references/browser.md'):
             self.assertEqual((self.stage / name).read_bytes(), (ROOT / name).read_bytes(), name)
+        self.assertTrue((self.stage / '启动iPhone屏幕.command').stat().st_mode & 0o111)
+        with zipfile.ZipFile(self.archive) as archive:
+            self.assertTrue(archive.getinfo('iphone-use/启动iPhone屏幕.command').external_attr >> 16 & 0o111)
         for document in list((self.stage / 'skills').rglob('*.md')) + [self.stage / 'README.md', self.stage / 'README.en.md', self.stage / 'CHANGELOG.md']:
             for target in re.findall(r'\]\(([^)]+)\)', document.read_text()):
                 if '://' in target or target.startswith('#'):
@@ -73,6 +81,29 @@ class PackagingTests(unittest.TestCase):
                 self.assertTrue(linked.is_relative_to(self.stage.resolve()), str(linked))
                 self.assertTrue(linked.exists(), f'{document.relative_to(self.stage)} -> {target}')
 
+    def test_browser_starts_from_install_and_extracted_source_with_spaces(self):
+        checkout = Path(self.directory.name) / 'browser extracted source'
+        with zipfile.ZipFile(self.archive) as archive:
+            archive.extractall(checkout)
+        for root in (self.stage, checkout / 'iphone-use'):
+            with self.subTest(root=root), tempfile.TemporaryDirectory(prefix='browser package state ') as state:
+                command = [sys.executable, str(root / 'scripts/browser.py')]
+                try:
+                    started = subprocess.run(command + ['start', '--port', '0', '--state-dir', state],
+                        capture_output=True, text=True, timeout=15, check=True)
+                    result = json.loads(started.stdout)
+                    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                    with opener.open(result['browser_url'], timeout=2) as response:
+                        page = response.read().decode()
+                    self.assertIn('data-transport="browser"', page)
+                    self.assertIn(json.loads((root / 'plugin.json').read_text())['version'], page)
+                    status = subprocess.run(command + ['status', '--state-dir', state],
+                        capture_output=True, text=True, timeout=5, check=True)
+                    self.assertEqual(json.loads(status.stdout)['pid'], result['pid'])
+                finally:
+                    subprocess.run(command + ['stop', '--state-dir', state],
+                        capture_output=True, text=True, timeout=10, check=True)
+
     def test_portable_source_recreates_install_and_serves_widget_resource(self):
         checkout = Path(self.directory.name) / 'extracted source'
         with zipfile.ZipFile(self.archive) as archive:
@@ -80,8 +111,10 @@ class PackagingTests(unittest.TestCase):
         source_root = checkout / 'iphone-use'
         subprocess.run([sys.executable, str(source_root / 'scripts/package.py'), '--stage-only'], check=True, capture_output=True, text=True)
         rebuilt = source_root / 'dist/iphone-use'
-        expected = {p.relative_to(self.stage): p.read_bytes() for p in self.stage.rglob('*') if p.is_file()}
-        actual = {p.relative_to(rebuilt): p.read_bytes() for p in rebuilt.rglob('*') if p.is_file()}
+        expected = {p.relative_to(self.stage): p.read_bytes() for p in self.stage.rglob('*')
+                    if p.is_file() and '__pycache__' not in p.parts}
+        actual = {p.relative_to(rebuilt): p.read_bytes() for p in rebuilt.rglob('*')
+                  if p.is_file() and '__pycache__' not in p.parts}
         self.assertEqual(actual, expected)
         version = json.loads((rebuilt / 'plugin.json').read_text())['version']
         requests = [

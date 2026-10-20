@@ -2,6 +2,8 @@
 
 [中文](README.md) · **English**
 
+This project is a fork of [zhongerxin/iPhone-use](https://github.com/zhongerxin/iPhone-use), maintained to customize and improve features for our needs and gradually extend support to more AI agents, so they can use iPhone Use to operate real iPhones. Thank you to the original author for sharing this work as open source.
+
 ![iPhone Use controlling a real iPhone in Codex with a live screen preview](assets/iphone-use-demo.png)
 
 Let Codex, WorkBuddy, or Doubao Work operate your real iPhone over USB. Describe a task in natural language: open apps, read screens, tap, scroll, enter text, collect lists, and watch the phone in a sidebar widget.
@@ -263,6 +265,8 @@ The UI builds into self-contained HTML. Source packages are written to `dist/iph
 See [screen preview and recovery](skills/iphone-use/references/screen.md), [app identifiers](skills/iphone-use/references/apps.md), [troubleshooting](skills/iphone-use-setup/references/troubleshooting.md), and [changelog](CHANGELOG.md).
 
 ## Dependencies and acknowledgements
+
+Special thanks to the original author, [zhongerxin](https://github.com/zhongerxin), for creating and open-sourcing [iPhone Use](https://github.com/zhongerxin/iPhone-use), including phone control, setup workflows, and live screen previews. The feature customization and agent integrations in this fork build on that work.
 
 This project relies on the [Appium](https://github.com/appium/appium) ecosystem and [WebDriverAgent](https://github.com/appium/WebDriverAgent). WDA provides the on-device automation service; [appium-ios-device](https://github.com/appium/appium-ios-device) provides USB device communication, port forwarding, and screen-stream connectivity. iPhone Use adds the Codex plugin, MCP tools, setup guidance, and screen widget. A separate Appium Server is not required.
 

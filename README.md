@@ -2,6 +2,8 @@
 
 **中文** · [English](README.en.md)
 
+本项目 fork 自 [zhongerxin/iPhone-use](https://github.com/zhongerxin/iPhone-use)，用于按实际需求定制和优化功能，并希望逐步适配更多 AI Agent，让更多 Agent 能够通过 iPhone Use 操作真实 iPhone。感谢原作者的开源贡献。
+
 ![iPhone Use 在 Codex 中操作真实 iPhone 并实时展示手机屏幕](assets/iphone-use-demo.png)
 
 让 Codex、WorkBuddy 或豆包工作通过 USB 操作你的真实 iPhone。用自然语言描述任务，助手就能打开 App、读取页面、点击、滚动、输入文字、整理列表，并在侧边栏展示手机屏幕。
@@ -253,6 +255,8 @@ python3 scripts/package.py
 - [更新记录](CHANGELOG.md)
 
 ## 依赖与致谢
+
+特别感谢原作者 [zhongerxin](https://github.com/zhongerxin) 创建并开源 [iPhone Use](https://github.com/zhongerxin/iPhone-use)，提供了手机控制、安装配置与实时屏幕预览等能力。本 fork 的功能定制与 Agent 适配工作建立在原项目的基础之上。
 
 本项目依赖 [Appium](https://github.com/appium/appium) 生态与 [WebDriverAgent](https://github.com/appium/WebDriverAgent)：WDA 提供手机端的自动化执行服务，[appium-ios-device](https://github.com/appium/appium-ios-device) 提供 USB 设备通信、端口转发与屏幕流连接能力。iPhone Use 在这些基础上提供 Codex 插件、MCP 工具、安装引导与屏幕 widget，无需单独运行 Appium Server。
 

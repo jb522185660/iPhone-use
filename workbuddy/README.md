@@ -10,6 +10,8 @@
 
 ## 安装
 
+已有安装仅更新技能时，按[增量更新](../skills/iphone-use-setup/references/updating.md)生成 WorkBuddy 适配后的技能并同步实际加载目录，不重跑本节的整包安装器；完成后说明本次变更和重载方式。
+
 需要助手代为安装时，使用主 README 的[通用安装提示词](../README.md#通用安装提示词)；以下保留本宿主的具体接入步骤。
 
 ```sh

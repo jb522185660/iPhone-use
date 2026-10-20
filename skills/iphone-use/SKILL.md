@@ -5,6 +5,8 @@ description: 通过 PUA（Phone Use Agent）MCP 工具高效操作真实 iPhone�
 
 # 用 PUA 完成 iPhone 任务
 
+仅要求安装、检查更新或更新技能时，使用 `iphone-use-setup` 的增量更新流程；纯技能维护不进入下面的手机初始化和屏幕流程。
+
 ## 首次使用时提供手机屏幕
 
 本会话首次使用 iPhone Use、取得有效 READY 后，处理一次屏幕入口；`iphone-use-setup` 已处理过则直接沿用。用户明确要求不展示时遵从。

@@ -72,8 +72,11 @@ https://github.com/jb522185660/iPhone-use
 Read the repository README, the current agent's adapter documentation, and the
 installer first. Identify the agent's plugin, MCP, skill, and screen display
 capabilities, then select the matching installation method. Install the local
-service and both skills: iphone-use and iphone-use-setup. If there is no dedicated
-adapter, check whether the agent can connect using STDIO MCP and its skill
+service and both skills: iphone-use and iphone-use-setup.
+If an existing installation only needs compatible skill updates, use the incremental
+update flow in iphone-use-setup, update only this agent's changed skills and references,
+summarize the changes, and skip the initial phone setup and acceptance steps below.
+If there is no dedicated adapter, check whether the agent can connect using STDIO MCP and its skill
 mechanism. Do not reuse another agent's installer or assume unverified support.
 
 Check Python, Node.js, npm, full Xcode, and the USB-connected iPhone.
@@ -135,6 +138,24 @@ Other agents must use actual local paths and retain the complete project directo
 Hosts share local device configuration, WDA builds, and the operation lock, so existing phone setup is reused. WorkBuddy and Doubao adapters do not require Codex CLI and disable anonymous usage statistics by default.
 
 If tools or skills are missing, check that the connector and both skills are enabled, then reconnect or start a new chat / Local Computer task as required by the host. Give exact locations for UI steps requiring the user's input and wait for completion. Repository access requires the appropriate permissions; an available source package can also be used.
+
+## Update an existing installation
+
+Use this shared prompt with your current agent. See [incremental updates](skills/iphone-use-setup/references/updating.md) for the workflow. Compare source revisions and actual file contents; skills can change without a plugin version bump.
+
+```text
+Use iphone-use-setup to check and incrementally update this agent's iPhone Use:
+https://github.com/jb522185660/iPhone-use
+If only compatible skills and their resources changed, update this agent's skills,
+preserving host adaptations and local customizations. Do not reinstall dependencies,
+change MCP or signing configuration, start/restart phone services, or run phone tests.
+If runtime updates are also needed, explain and update the affected layers while
+preserving the existing phone configuration and valid builds.
+Summarize the applied changes, source revision, and any skill reload steps.
+If nothing changed, report that it is already up to date.
+```
+
+Skill-only maintenance does not require a connected or unlocked phone. Each agent's skill copy is updated separately; account-uploaded skills still need reimporting in that host. Preparing local files alone does not confirm that the account copy has been updated.
 
 ## Requirements
 

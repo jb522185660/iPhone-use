@@ -10,6 +10,8 @@
 
 ## 安装
 
+需要助手代为安装时，使用主 README 的[通用安装提示词](../README.md#通用安装提示词)；以下保留本宿主的具体接入步骤。
+
 ```sh
 python3 doubao/install.py
 ```

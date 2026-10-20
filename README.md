@@ -6,7 +6,7 @@
 
 ![iPhone Use 在 Codex 中操作真实 iPhone 并实时展示手机屏幕](assets/iphone-use-demo.png)
 
-让 Codex、WorkBuddy 或豆包工作通过 USB 操作你的真实 iPhone。用自然语言描述任务，助手就能打开 App、读取页面、点击、滚动、输入文字、整理列表，并在侧边栏展示手机屏幕。
+让支持本地 MCP 和技能的 AI Agent 通过 USB 操作你的真实 iPhone。用自然语言描述任务，助手就能打开 App、读取页面、点击、滚动、输入文字、整理列表，并通过原生侧栏或浏览器展示手机屏幕。
 
 iPhone Use 使用 [WebDriverAgent](https://github.com/appium/WebDriverAgent)（WDA）与 iPhone 通信，包含本地 MCP 服务、安装与使用技能，以及实时屏幕 widget。它优先复用现有连接与构建；控件定位失败时，指导模型查看截图并尝试坐标点击。
 
@@ -62,111 +62,72 @@ sh ./启动iPhone屏幕.command
 
 完整的逐项真机、浏览器、自动化和宿主验收记录见 [0.4.0 验收报告](ACCEPTANCE-0.4.0.md)。
 
-## 用一段提示词让 Codex 安装
+## 通用安装提示词
 
-将下面这段话复制到本机 Codex：
+将下面这一段发给当前使用的 Agent 即可，Codex、WorkBuddy、豆包工作及其他具备相应接入能力的 Agent 共用。助手按下方安装入口选择当前宿主的方式，并根据实际能力展示手机屏幕。
 
 ```text
-请帮我安装和配置 iPhone Use：
+请在这台 Mac 上安装和配置 iPhone Use，让当前 Agent 能通过 USB 操作我的真实 iPhone：
 https://github.com/jb522185660/iPhone-use
 
-先读取仓库 README 和安装脚本，检查本机 Codex CLI、Python、Node.js、npm、
-完整 Xcode，以及通过 USB 连接的 iPhone。把项目放到合适的本机目录，
-运行 sh scripts/install.sh 安装插件。
+先阅读仓库 README、当前 Agent 对应的适配说明和安装脚本。
+识别当前 Agent 的插件、MCP、技能和屏幕展示能力，选择对应的安装方式。
+安装本地服务，并安装或导入 iphone-use、iphone-use-setup 两个技能。
+没有专用适配时，检查能否按当前 Agent 支持的 STDIO MCP 和技能方式接入，
+不要直接套用其他 Agent 的安装命令，也不要假定宿主支持尚未验证的能力。
 
-需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
-再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
-只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
-并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
+检查 Python、Node.js、npm、完整 Xcode 和 USB iPhone。
+克隆或复用本地源码，保留已有改动。缺少依赖时说明具体缺项并帮助处理。
+需要启用连接器、导入技能或重新打开会话时，给出当前宿主的具体步骤，
+确认工具和两个技能已经加载后继续。
 
-如果当前聊天还没有加载新工具，明确告诉我重连或新开聊天后继续。
-工具可用后读取 iphone-use-setup 技能，检查现有配置，优先复用已有 WDA。
-首次配置时发现我的设备，使用我自己的 Apple 开发团队和可签名 bundle ID，
-获取固定版本 WDA、配置签名、构建并启动，直到 pua_ready 返回 ready=true，
-然后打开手机屏幕。不要照搬作者的设备标识或签名信息。
+读取 iphone-use-setup，先查询 setup status，优先复用已有设备配置、
+健康的 WDA、现有构建或正在执行的启动任务，避免重复安装和启动。
+首次配置使用我自己的 iPhone、Apple 开发团队及可签名的 Bundle ID，
+完成必要的签名、构建和启动，直到 pua_ready 返回 ready=true。
 
-缺少依赖时说明具体缺项并帮助安装。Apple 账号登录、设备信任、开发者模式
-或解锁需要我操作时，告诉我明确步骤，等我完成再继续。
+需要构建 WDA 时，优先尝试本机已有的完整 Xcode。
+不要仅凭 iOS、Xcode 或 SDK 版本号差异判断必须升级。
+只有实际错误明确指向兼容性问题时，才说明原因并等待我确认后下载或切换；
+保留现有 Xcode 和系统默认开发者目录。
 
-启动成功后，请在回复中给出实际 browser_url 的可点击链接；宿主不支持原生手机面板但支持侧栏浏览器时，按我的展示要求在侧栏浏览器中打开，不自动弹出系统浏览器。
+READY 成功后展示手机屏幕：
+1. 支持原生手机面板时，优先使用并复用原生面板；
+   READY 没有自动展示时，按适配说明调用 pua_screen。
+2. 不支持原生面板、但支持侧栏浏览器时，在侧栏浏览器打开实际 browser_url。
+3. 没有侧栏浏览器时，提供可点击链接；我要求时再打开系统浏览器。
+无论采用哪种展示方式，都在回复中提供实际 browser_url。
+复用已有页面，不猜端口，不写死用户名、安装目录或插件版本。
+
+最后在 iPhone 计算器中简单验证 12×34=408，
+说明安装结果、技能加载情况和使用的屏幕展示方式。
+
+Apple 账号登录、设备信任、开发者模式、密码、解锁或 Face ID
+需要我操作时，说明具体步骤并等待我完成；不重放结果不确定的手机操作。
 ```
 
-安装插件后，当前聊天可能需要重新连接才能加载工具，流程可在重连后继续。Apple 账号登录、设备信任、开发者模式及手机解锁仍需本人在系统界面完成。
+### 各宿主的安装入口
 
-仓库目前为私有，需要有 GitHub 访问权限，或者使用已取得的源代码包。
+通用提示词相同，安装器和连接器、技能的启用方式仍按宿主选择。在本机源码目录运行对应入口：
 
-## 在 WorkBuddy 和豆包工作中安装
-
-两者都支持通过 USB 操作真实 iPhone，并在侧边栏显示实时画面；共用本机的设备配置、WDA 构建和操作锁，已配置过的手机优先复用。依赖仍是 macOS、完整 Xcode、Python、Node.js / npm 和 USB iPhone，安装这两个适配版无需 Codex CLI。适配版默认关闭匿名使用统计。
-
-| 宿主 | 在源码目录运行 | 安装后的接入 |
+| 宿主 | 安装入口 | 安装后的接入 |
 | --- | --- | --- |
-| [WorkBuddy](https://github.com/jb522185660/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | 在「连接器管理」信任 `iphone_use`，新开会话 |
-| [豆包工作](https://github.com/jb522185660/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | 按安装器输出新建 STDIO 连接器，上传两个技能，新开「本地电脑」任务 |
+| Codex | `sh scripts/install.sh`（需 Codex CLI） | 自动安装插件、MCP 服务和两个技能；重连或新开聊天后启用 |
+| [WorkBuddy](https://github.com/jb522185660/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | 自动写入服务和两个技能，在「连接器管理」信任 `iphone_use`，新开会话 |
+| [豆包工作](https://github.com/jb522185660/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | 按安装器输出新建 STDIO 连接器、上传两个技能并启用，新开「本地电脑」任务 |
+| 其他 Agent | 先确认支持本机 STDIO MCP 和技能接入 | 按宿主方式注册 `iphone_use`，使用 `/bin/sh` 及实际安装目录下 `scripts/mcp.sh` 的路径，并导入 `skills/iphone-use`、`skills/iphone-use-setup` |
 
-将对应提示词发给本机的 WorkBuddy 或豆包工作。助手可执行本地安装；宿主界面的接入步骤若无法自动操作，会说明需要你完成的具体步骤。首次签名仍使用你自己的 Apple 账号和开发团队。
+其他 Agent 的接入配置应使用本机实际路径，并保留完整项目目录；服务需要访问这台 Mac 的 USB、Xcode 和本机回环地址。接入方式与原生面板、侧栏浏览器的支持情况需在对应宿主实际确认。
 
-### 发给 WorkBuddy 的提示词
+几个宿主共用本机的设备配置、WDA 构建和操作锁，已配置过的手机优先复用。WorkBuddy 和豆包适配版不需要 Codex CLI，默认关闭匿名使用统计。
 
-```text
-请在这台 Mac 上安装 iPhone Use，让 WorkBuddy 通过 USB 操作我的真实 iPhone：
-https://github.com/jb522185660/iPhone-use
-
-先读取 README.md、workbuddy/README.md 和安装脚本，检查 Python、Node.js、npm、
-完整 Xcode 和 USB iPhone。克隆或复用本地源码，保留已有改动，
-在源码目录运行 python3 workbuddy/install.py；不要运行 Codex 安装脚本。
-在 WorkBuddy「连接器管理」里信任并启用 iphone_use，然后新开会话加载工具和技能。
-如果这些界面步骤需要我操作，给出具体位置，等我完成后继续。
-
-需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
-再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
-只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
-并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
-
-工具可用后读取 iphone-use-setup，先查询 setup status，复用已有配置、健康 WDA
-或正在运行的启动任务；首次配置使用我自己的设备和 Apple 开发团队完成签名与启动。
-确认 pua_ready 返回 ready=true 后调用一次 pua_screen()，在侧边栏显示实时手机画面，
-再在 iPhone 计算器中验证 12×34=408。Apple 登录、信任、开发者模式或解锁
-需要我接管时，说明具体步骤并等我完成；不要照搬作者的设备标识或签名信息。
-
-启动成功后，请在回复中给出实际 browser_url 的可点击链接；宿主不支持原生手机面板但支持侧栏浏览器时，按我的展示要求在侧栏浏览器中打开，不自动弹出系统浏览器。
-```
-
-### 发给豆包工作的提示词
-
-```text
-请在这台 Mac 上安装 iPhone Use，让豆包工作通过 USB 操作我的真实 iPhone：
-https://github.com/jb522185660/iPhone-use
-
-在「本地电脑」任务中先读取 README.md、doubao/README.md 和安装脚本，
-检查 Python、Node.js、npm、完整 Xcode 和 USB iPhone。克隆或复用本地源码，
-保留已有改动，在源码目录运行 python3 doubao/install.py；不要运行 Codex 安装脚本。
-按安装器输出，在「插件 · 技能 · 伙伴」中新建名为 iphone_use 的 STDIO 连接器，
-命令和参数使用输出的绝对路径，并分别上传安装目录下的 iphone-use、iphone-use-setup
-两个技能文件夹。启用连接器和技能，再新开「本地电脑」任务；已有连接器更新后关闭再打开。
-如果这些界面步骤需要我操作，给出具体位置和路径，等我完成后继续。
-
-需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
-再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
-只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
-并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
-
-工具可用后读取 iphone-use-setup，先查询 setup status，复用已有配置、健康 WDA
-或正在运行的启动任务；首次配置使用我自己的设备和 Apple 开发团队完成签名与启动。
-确认 pua_ready 返回 ready=true 后调用一次 pua_screen()，在右侧 MCP App 显示实时手机画面，
-再在 iPhone 计算器中验证 12×34=408。Apple 登录、信任、开发者模式或解锁
-需要我接管时，说明具体步骤并等我完成；不要照搬作者的设备标识或签名信息。
-
-启动成功后，请在回复中给出实际 browser_url 的可点击链接；宿主不支持原生手机面板但支持侧栏浏览器时，按我的展示要求在侧栏浏览器中打开，不自动弹出系统浏览器。
-```
-
-如果工具没有加载，先确认连接器已启用，再新开会话 / 本地电脑任务。两个宿主同时使用同一部手机时，按共享操作锁的提示等待，避免同时操作。详细安装、更新和排查步骤见上表链接。
+若工具或技能尚未加载，先检查连接器和两个技能是否启用，再按宿主要求重连、新开会话或新开本地电脑任务；需要用户完成的界面步骤应给出具体位置并等待完成。访问仓库需要相应权限，也可使用已取得的源代码包。
 
 ## 安装依赖
 
 | 依赖 | 用途 |
 | --- | --- |
-| macOS 与 Codex、WorkBuddy 或豆包工作 | 运行本地 MCP 服务与屏幕侧边栏；Codex 版安装另需 Codex CLI |
+| macOS 与支持本地 STDIO MCP、技能的 Agent | 运行本地服务与手机面板；只有 Codex 安装器需要 Codex CLI |
 | 完整 Xcode，已完成首次启动配置 | 编译、签名、部署和运行 WDA；仅 Command Line Tools 不够 |
 | 可在 Xcode 中使用的 Apple 账号和开发团队 | 签名手机端 WDA Runner |
 | USB 连接的真实 iPhone | 信任此 Mac，开启设备要求的开发者模式，安装与启动期间保持解锁 |
@@ -179,7 +140,7 @@ Xcode 需要支持手机当前的 iOS 版本。无需越狱，也无需单独启
 
 手机端使用 [Appium 维护的 WebDriverAgent](https://github.com/appium/WebDriverAgent)。首次使用时，须通过 Xcode 用你自己的 Apple 账号与开发团队签名、安装并启动 `WebDriverAgentRunner`。
 
-推荐使用上面的安装提示词和下面的 `iphone-use-setup` 流程：Codex 获取本项目固定版本的 WDA，配置你的设备和签名，再完成构建、部署与启动；需要你完成 Apple 登录、设备信任、开发者模式或解锁时，会提示具体步骤。
+推荐使用上面的安装提示词和下面的 `iphone-use-setup` 流程：当前 Agent 获取本项目固定版本的 WDA，配置你的设备和签名，再完成构建、部署与启动；需要你完成 Apple 登录、设备信任、开发者模式或解锁时，会提示具体步骤。
 
 如需在 Xcode 手动处理：
 
@@ -189,25 +150,24 @@ Xcode 需要支持手机当前的 iOS 版本。无需越狱，也无需单独启
 
 本对话首次使用先调用 `pua_setup(action="status")`，复用健康服务或活动工作；缺少服务才 start 一次。start 默认最多等待 20 秒，超时后按同一 job 查询，不重复启动。服务就绪后，以 `pua_ready` 返回 `ready=true` 为准，再开始手机任务。设备与签名要求可参考 [Appium 真机准备说明](https://appium.github.io/appium-xcuitest-driver/latest/getting-started/device-setup/)。
 
-### 安装插件
+### 手动安装
 
 ```sh
 git clone https://github.com/jb522185660/iPhone-use.git
 cd iPhone-use
-sh scripts/install.sh
 ```
 
-脚本验证并暂存源码，通过 Codex CLI 注册本地 marketplace、安装插件和技能，并将安装缓存中的服务注册为标准 MCP `iphone_use`。插件与标准配置使用同一命名空间，避免重复工具注册。
+从上方安装入口表选择当前宿主对应的命令。Codex 安装脚本验证并暂存源码，通过 Codex CLI 注册本地 marketplace、安装插件和技能，并将安装缓存中的服务注册为标准 MCP `iphone_use`。插件与标准配置使用同一命名空间，避免重复工具注册。
 
-源代码包解压后，也可以在包目录运行同一个安装脚本。安装完成后重连或新开 Codex 聊天。
+源代码包解压后，也可以在包目录选择对应的安装入口。安装完成后按宿主要求启用服务和两个技能，并重连或新开会话。
 
 ### 连接自己的 iPhone
 
-在新聊天中启用 **iPhone Use**，输入：
+在工具和两个技能已加载的新会话中，输入：
 
 > 用 iphone-use-setup 帮我配置通过 USB 连接的 iPhone，安装并启动 WDA，验证 READY，然后显示手机屏幕。
 
-技能引导 Codex 完成诊断、设备发现、签名配置、获取 WDA、后台构建与启动。已配置过的设备会复用配置和构建，正常任务不需要每次重装。`pua_ready` 返回 `ready=true` 后才开始手机任务。
+技能引导当前 Agent 完成诊断、设备发现、签名配置、获取 WDA、后台构建与启动。已配置过的设备会复用配置和构建，正常任务不需要每次重装。`pua_ready` 返回 `ready=true` 后才开始手机任务。
 
 ## 可以做什么
 

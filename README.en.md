@@ -35,6 +35,14 @@ Read the repository README and installation script first. Check Codex CLI,
 Python, Node.js, npm, full Xcode, and the iPhone connected over USB.
 Clone the project into a suitable local directory and run sh scripts/install.sh.
 
+When WDA needs to be built, first try the full Xcode already installed on this Mac
+to build, sign, install, and start it, then verify with pua_ready. Do not infer that an upgrade is required
+solely from differences between iOS, Xcode, or SDK version numbers. Only when an
+actual build or startup error clearly identifies an Xcode/iOS compatibility issue
+should you explain the cause and required version, then wait for my confirmation
+before downloading or switching Xcode. Preserve the existing Xcode installation
+and system default developer directory to avoid affecting other projects.
+
 If this chat cannot load the new tools, tell me to reconnect or start a new chat
 and continue there. Once tools are available, read the iphone-use-setup skill.
 Inspect existing configuration and reuse healthy WDA. For initial setup,
@@ -74,6 +82,14 @@ Do not run the Codex installer. Trust and enable iphone_use in WorkBuddy's
 Connector Management, then start a new chat to load the tools and skills.
 If I need to complete a UI step, give its exact location and wait for me.
 
+When WDA needs to be built, first try the full Xcode already installed on this Mac
+to build, sign, install, and start it, then verify with pua_ready. Do not infer that an upgrade is required
+solely from differences between iOS, Xcode, or SDK version numbers. Only when an
+actual build or startup error clearly identifies an Xcode/iOS compatibility issue
+should you explain the cause and required version, then wait for my confirmation
+before downloading or switching Xcode. Preserve the existing Xcode installation
+and system default developer directory to avoid affecting other projects.
+
 Once tools are available, read iphone-use-setup and check setup status first.
 Reuse existing configuration, healthy WDA, or an active startup job. For initial
 setup, use my own device and Apple development team to sign and start WDA.
@@ -99,6 +115,14 @@ folders from the installation directory. Enable the connector and both skills,
 then start a new Local Computer task. Toggle an existing connector off and on
 after updating. Give exact UI locations and paths for steps I need to complete,
 and wait for me before continuing.
+
+When WDA needs to be built, first try the full Xcode already installed on this Mac
+to build, sign, install, and start it, then verify with pua_ready. Do not infer that an upgrade is required
+solely from differences between iOS, Xcode, or SDK version numbers. Only when an
+actual build or startup error clearly identifies an Xcode/iOS compatibility issue
+should you explain the cause and required version, then wait for my confirmation
+before downloading or switching Xcode. Preserve the existing Xcode installation
+and system default developer directory to avoid affecting other projects.
 
 Once tools are available, read iphone-use-setup and check setup status first.
 Reuse existing configuration, healthy WDA, or an active startup job. For initial

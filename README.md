@@ -35,6 +35,11 @@ https://github.com/zhongerxin/iPhone-use
 完整 Xcode，以及通过 USB 连接的 iPhone。把项目放到合适的本机目录，
 运行 sh scripts/install.sh 安装插件。
 
+需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
+再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
+只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
+并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
+
 如果当前聊天还没有加载新工具，明确告诉我重连或新开聊天后继续。
 工具可用后读取 iphone-use-setup 技能，检查现有配置，优先复用已有 WDA。
 首次配置时发现我的设备，使用我自己的 Apple 开发团队和可签名 bundle ID，
@@ -72,6 +77,11 @@ https://github.com/zhongerxin/iPhone-use
 在 WorkBuddy「连接器管理」里信任并启用 iphone_use，然后新开会话加载工具和技能。
 如果这些界面步骤需要我操作，给出具体位置，等我完成后继续。
 
+需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
+再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
+只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
+并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
+
 工具可用后读取 iphone-use-setup，先查询 setup status，复用已有配置、健康 WDA
 或正在运行的启动任务；首次配置使用我自己的设备和 Apple 开发团队完成签名与启动。
 确认 pua_ready 返回 ready=true 后调用一次 pua_screen()，在侧边栏显示实时手机画面，
@@ -92,6 +102,11 @@ https://github.com/zhongerxin/iPhone-use
 命令和参数使用输出的绝对路径，并分别上传安装目录下的 iphone-use、iphone-use-setup
 两个技能文件夹。启用连接器和技能，再新开「本地电脑」任务；已有连接器更新后关闭再打开。
 如果这些界面步骤需要我操作，给出具体位置和路径，等我完成后继续。
+
+需要构建 WDA 时，优先使用本机已安装的完整 Xcode 尝试编译、签名、安装并启动，
+再通过 pua_ready 验证，不要仅凭 iOS、Xcode 或 SDK 的版本号差异判定必须升级。
+只有实际构建或启动错误明确指向 Xcode/iOS 兼容性问题时，才说明原因和所需版本，
+并等我确认后再下载或切换 Xcode；保留现有 Xcode 和系统默认开发者目录，避免影响其他项目。
 
 工具可用后读取 iphone-use-setup，先查询 setup status，复用已有配置、健康 WDA
 或正在运行的启动任务；首次配置使用我自己的设备和 Apple 开发团队完成签名与启动。

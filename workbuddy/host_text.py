@@ -17,7 +17,7 @@ class Drift(Exception):
 INSTRUCTIONS = [
     ("A screenshot arrives as an image in the same result; through functions.exec forward each image block with image(block) and text blocks with text(block.text), never text(the whole result) or base64. If image forwarding is unavailable, use view_image on image.path or error.observation.image.path. ",
      "A screenshot arrives as an image in the same result. If no image is visible in the result, open image.path or error.observation.image.path with the host's file reading tool; image metadata or base64 text is not a viewed screenshot. "),
-    ("The live iPhone screen opens or reuses the same side panel with READY; setup/recovery and preview pause/resume keep the existing panel. Use pua_screen to reopen a closed panel, not to refresh an already open one. ",
+    ("On hosts with a native phone panel, READY opens or reuses the same side panel; setup/recovery and preview pause/resume keep the existing panel. Use pua_screen to reopen a closed panel, not to refresh an already open one. ",
      "WorkBuddy shows the live iPhone screen in its side panel, opened by pua_screen(): READY does not open it. After the first READY in a chat call pua_screen() once so the user can watch; later pua_screen calls reuse the same panel, and an open panel never needs refreshing. "),
     ("use the available host question tool (request_user_input_async in Default), first option exactly 已完成继续. Wait for the actual user answer; async return or preselection is not confirmation.",
      "use the host question tool (AskUserQuestion in WorkBuddy), first option exactly 已完成继续. Wait for the actual user answer; a skipped, timed-out or preselected question is not confirmation."),

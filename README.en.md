@@ -29,7 +29,7 @@ October 9–13, 2026. See the [changelog](CHANGELOG.md) for details.
 
 The native sidebar and browser use the same panel code: live video, taps, mouse drags, trackpad and wheel scrolling, Refresh, Home, and screenshots copied to the Mac clipboard. Device appearance, activity effects, locking and authentication handoff remain the same. The browser service is local to the Mac connected to the phone.
 
-After successful startup or READY, agents provide a clickable phone-screen link from `browser_url`. When a host lacks the native panel but has a sidebar browser, it can open that link there when the user requests a view. Otherwise, use a regular browser. Do not guess the port.
+After successful startup or READY, agents provide a clickable phone-screen link from `browser_url`. At the start of each new phone task, proactively show the screen: reuse and reveal an existing native panel or phone page, opening one only if absent or closed. Use a sidebar browser when there is no native panel. Without a sidebar browser, provide the link and open an external browser only when requested. Do not guess the port.
 
 ```sh
 # Start a configured USB iPhone and open its browser panel
@@ -94,7 +94,8 @@ numbers. Only when an actual error identifies a compatibility issue, explain it
 and wait for my confirmation before downloading or switching Xcode. Preserve
 existing Xcode installations and the system default developer directory.
 
-After READY succeeds, show the phone screen:
+After READY succeeds and at the start of each subsequent new phone task,
+proactively show the screen:
 1. Prefer and reuse the native phone panel when supported. If READY does not
    open it automatically, call pua_screen as directed by the adapter documentation.
 2. If there is no native panel but a sidebar browser is available, open the
@@ -102,7 +103,10 @@ After READY succeeds, show the phone screen:
 3. Without a sidebar browser, provide a clickable link. Open an external
    browser only when I ask.
 Always include the actual browser_url as a clickable link in your reply.
-Reuse existing pages, do not guess ports, and do not hardcode usernames,
+Reuse and reveal an existing panel or phone page; open one only if absent or
+closed. Confirm the user can see it, rather than relying on background navigation.
+Do not repeat READY for display or reopen after every action. Honor explicit
+requests not to show the screen. Do not guess ports or hardcode usernames,
 installation directories, or plugin versions.
 
 Finally, verify 12×34=408 in the iPhone Calculator and report installation status,

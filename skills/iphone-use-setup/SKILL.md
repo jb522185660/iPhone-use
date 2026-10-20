@@ -44,6 +44,8 @@ description: 配置 PUA（Phone Use Agent），在用户自己的 iPhone 上安�
 
 ## READY 验收与恢复
 
+每次使用本技能完成初始化或恢复后，按下文「屏幕展示与浏览器入口」主动展示手机屏幕；已有健康通道和面板 / 网页时直接沿用，不为展示画面重复 READY。
+
 READY 已返回设备、会话、视口和当前 observation，复用这些信息准备下一步。不要紧接着重复读树或为每项任务增加导航预检；只有具体诊断确实需要时才在无副作用页面测试。常规导航默认 observe=none、verify=false；下一步需要未知页面信息时，在本次动作返回 tree / screenshot / both，不另加验证回合。最终关键操作显式 expect / verify 或一次终态读取。
 
 通道 READY 后，目标 App 仍可能要求密码、验证码或 Face ID。按 [认证接管与恢复](../iphone-use/references/authentication.md)，先调用 `pua_screen(action="pause")` 停止预览采集；widget 保留暂停前的画面并显示接管遮罩，再按该参考调用提问工具提示用户在 iPhone 上完成，首个选项「已完成继续」；接管期间暂停手机调用。收到用户实际选择「已完成继续」或明确完成通知后调用 `pua_screen(action="resume")`，重新观察 App 和目标页。App 认证不是 PUA 故障，不为此重复 build / start / recover；手机真正锁屏或通道中断时才恢复 READY。
@@ -60,10 +62,12 @@ Apple 的 [开发者账户说明](https://developer.apple.com/help/account/basic
 
 [Apple 开发者模式](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device)与 [Appium 真机准备](https://appium.github.io/appium-xcuitest-driver/latest/getting-started/device-setup/)提供配对、开发模式与签名要求。流程以当前 Xcode/iOS 的实际提示和工具诊断为准；本插件不要求越狱。
 
-## 启动后的浏览器入口
+## 屏幕展示与浏览器入口
 
 安装包包含 `iphone-use-setup` 和 `iphone-use` 两个技能，以及网页服务和预构建面板。按当前宿主的安装器说明启用或导入技能；不要仅因安装了服务就假定宿主已经加载技能。
 
-启动和 READY 成功后读取结果中的 `browser_url`，在回复中给出可点击的手机屏幕链接。不支持原生面板、但提供侧栏浏览器的宿主，在用户要求展示屏幕时可使用其浏览器工具打开该地址；没有侧栏浏览器就提供本机浏览器链接。已有页面优先复用，普通启动不自动弹出系统浏览器。
+启动和 READY 成功后读取结果中的 `browser_url`，在回复中给出可点击的手机屏幕链接，并主动展示屏幕，不等用户另行要求。支持原生面板时沿用已有面板，尚未打开或已关闭时调用一次 `pua_screen()`；READY 已自动展示时不再调用。不支持原生面板、但提供侧栏浏览器时，使用当前宿主的浏览器工具打开该地址并展开侧栏；已有手机页面就复用并切换到该页，已关闭才新开。没有侧栏浏览器时提供链接，用户要求后再打开系统浏览器。用户明确要求不展示时遵从。
+
+确认面板或侧栏确实展开并显示手机页面，而非只收到打开成功或后台截图。使用宿主实际提供的显示能力，不能臆造工具；无法确认可见时如实说明。日后继续使用 `iphone-use` 时执行同样的展示与复用规则，不为打开画面重复启动服务或重验 READY。具体显示检查见[浏览器面板与命令](../iphone-use/references/browser.md)。
 
 网页服务默认仅供这台 Mac 使用，复用设备配置、PUA、操作锁和认证暂停状态。使用当前安装目录下的 `scripts/browser.py` 查询状态或启动服务，详见[浏览器面板与命令](../iphone-use/references/browser.md)。网页错误不等于 PUA 不可用，不为网页问题重复构建或重签名。

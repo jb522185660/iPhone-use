@@ -273,6 +273,8 @@ git pull --ff-only
 sh scripts/install.sh
 ```
 
+The Codex install script preserves this project's older cache versions so running chats and background jobs can continue reading their resources. Use the script above for upgrades; calling `codex plugin add` directly bypasses this protection.
+
 Reconnect the chat after updating. For connection failures, check USB, unlocking, Developer Mode, signing, and the specific setup error. Query an existing startup job before restarting again.
 
 ## Development and documentation

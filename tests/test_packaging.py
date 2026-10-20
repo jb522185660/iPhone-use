@@ -67,7 +67,7 @@ class PackagingTests(unittest.TestCase):
                 self.assertEqual((self.stage / rel).read_bytes(), source.read_bytes(), str(rel))
         for name in ('启动iPhone屏幕.command', 'assets/phone-screen.html', 'tooling/screen-stream.mjs', 'tooling/forward.mjs',
                      'tooling/package-lock.json', 'scripts/phone.py', 'scripts/check_screen_ui.py',
-                     'scripts/browser.py', 'scripts/launch_screen.py', 'scripts/mcp.sh',
+                     'scripts/browser.py', 'scripts/launch_screen.py', 'scripts/mcp.sh', 'scripts/install_plugin.py',
                      'server/wda_browser.py', 'server/wda_environment.py',
                      'skills/iphone-use/references/browser.md'):
             self.assertEqual((self.stage / name).read_bytes(), (ROOT / name).read_bytes(), name)

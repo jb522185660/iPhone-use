@@ -11,7 +11,7 @@ import zipfile
 ROOT=Path(__file__).resolve().parents[1]
 FILES=('plugin.json','mcp.json','.mcp.json','.codex-plugin/plugin.json','.agents/plugins/marketplace.json','README.md','README.en.md','ANALYTICS.md','CHANGELOG.md','ACCEPTANCE-0.4.0.md','LICENSE','THIRD_PARTY_NOTICES.md','启动iPhone屏幕.command','ui/package.json','ui/package-lock.json','ui/build.mjs','ui/src/app.ts','ui/src/browser.ts','ui/index.html','ui/style.css','ui/tsconfig.json','ui/tests/widget.test.mjs','ui/tests/browser.test.mjs')
 DIRS=('assets','server','skills')
-INSTALL_SCRIPTS=('phone.py','wda.sh','browser.py','launch_screen.py','mcp.sh','update_app_catalog.py','check_screen_ui.py','package.py','install.sh','register_mcp.py')
+INSTALL_SCRIPTS=('phone.py','wda.sh','browser.py','launch_screen.py','mcp.sh','update_app_catalog.py','check_screen_ui.py','package.py','install.sh','install_plugin.py','register_mcp.py')
 SOURCE_DIRS=('scripts','tests','.github')
 TOOLING_FILES=('package.json','package-lock.json','forward.mjs','screen-stream.mjs')
 

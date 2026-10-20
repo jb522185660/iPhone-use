@@ -31,7 +31,7 @@ Paste this prompt into Codex running on your Mac:
 
 ```text
 Install and configure iPhone Use for me:
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 Read the repository README and installation script first. Check Codex CLI,
 Python, Node.js, npm, full Xcode, and the iPhone connected over USB.
@@ -66,8 +66,8 @@ Both hosts can control a real iPhone over USB and show its live screen in a side
 
 | Host | Run from the source directory | Connect after installation |
 | --- | --- | --- |
-| [WorkBuddy](https://github.com/zhongerxin/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | Trust `iphone_use` in Connector Management, then start a new chat |
-| [Doubao Work](https://github.com/zhongerxin/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | Add a STDIO connector using the installer output, upload both skills, then start a Local Computer task |
+| [WorkBuddy](https://github.com/jb522185660/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | Trust `iphone_use` in Connector Management, then start a new chat |
+| [Doubao Work](https://github.com/jb522185660/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | Add a STDIO connector using the installer output, upload both skills, then start a Local Computer task |
 
 Paste the matching prompt into the host running on your Mac. The assistant can perform the local installation and explain any host UI steps it cannot complete. First-time signing uses your own Apple account and development team.
 
@@ -75,7 +75,7 @@ Paste the matching prompt into the host running on your Mac. The assistant can p
 
 ```text
 Install iPhone Use on this Mac so WorkBuddy can operate my real iPhone over USB:
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 Read README.en.md, workbuddy/README.md, and the installer first. Check Python,
 Node.js, npm, full Xcode, and the USB iPhone. Clone or reuse a local checkout,
@@ -105,7 +105,7 @@ wait for me. Do not copy the author's device identifiers or signing settings.
 
 ```text
 Install iPhone Use on this Mac so Doubao Work can operate my real iPhone over USB:
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 In a Local Computer task, read README.en.md, doubao/README.md, and the installer.
 Check Python, Node.js, npm, full Xcode, and the USB iPhone. Clone or reuse a local
@@ -167,7 +167,7 @@ After installing the plugin and configuring USB connectivity, start phone tasks 
 ## Install and connect
 
 ```sh
-git clone https://github.com/zhongerxin/iPhone-use.git
+git clone https://github.com/jb522185660/iPhone-use.git
 cd iPhone-use
 sh scripts/install.sh
 ```

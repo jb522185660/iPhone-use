@@ -31,7 +31,7 @@ iPhone Use 使用 [WebDriverAgent](https://github.com/appium/WebDriverAgent)（W
 
 ```text
 请帮我安装和配置 iPhone Use：
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 先读取仓库 README 和安装脚本，检查本机 Codex CLI、Python、Node.js、npm、
 完整 Xcode，以及通过 USB 连接的 iPhone。把项目放到合适的本机目录，
@@ -62,8 +62,8 @@ https://github.com/zhongerxin/iPhone-use
 
 | 宿主 | 在源码目录运行 | 安装后的接入 |
 | --- | --- | --- |
-| [WorkBuddy](https://github.com/zhongerxin/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | 在「连接器管理」信任 `iphone_use`，新开会话 |
-| [豆包工作](https://github.com/zhongerxin/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | 按安装器输出新建 STDIO 连接器，上传两个技能，新开「本地电脑」任务 |
+| [WorkBuddy](https://github.com/jb522185660/iPhone-use/blob/main/workbuddy/README.md) | `python3 workbuddy/install.py` | 在「连接器管理」信任 `iphone_use`，新开会话 |
+| [豆包工作](https://github.com/jb522185660/iPhone-use/blob/main/doubao/README.md) | `python3 doubao/install.py` | 按安装器输出新建 STDIO 连接器，上传两个技能，新开「本地电脑」任务 |
 
 将对应提示词发给本机的 WorkBuddy 或豆包工作。助手可执行本地安装；宿主界面的接入步骤若无法自动操作，会说明需要你完成的具体步骤。首次签名仍使用你自己的 Apple 账号和开发团队。
 
@@ -71,7 +71,7 @@ https://github.com/zhongerxin/iPhone-use
 
 ```text
 请在这台 Mac 上安装 iPhone Use，让 WorkBuddy 通过 USB 操作我的真实 iPhone：
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 先读取 README.md、workbuddy/README.md 和安装脚本，检查 Python、Node.js、npm、
 完整 Xcode 和 USB iPhone。克隆或复用本地源码，保留已有改动，
@@ -95,7 +95,7 @@ https://github.com/zhongerxin/iPhone-use
 
 ```text
 请在这台 Mac 上安装 iPhone Use，让豆包工作通过 USB 操作我的真实 iPhone：
-https://github.com/zhongerxin/iPhone-use
+https://github.com/jb522185660/iPhone-use
 
 在「本地电脑」任务中先读取 README.md、doubao/README.md 和安装脚本，
 检查 Python、Node.js、npm、完整 Xcode 和 USB iPhone。克隆或复用本地源码，
@@ -149,7 +149,7 @@ Xcode 需要支持手机当前的 iOS 版本。无需越狱，也无需单独启
 ### 安装插件
 
 ```sh
-git clone https://github.com/zhongerxin/iPhone-use.git
+git clone https://github.com/jb522185660/iPhone-use.git
 cd iPhone-use
 sh scripts/install.sh
 ```

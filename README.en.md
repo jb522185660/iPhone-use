@@ -96,10 +96,11 @@ existing Xcode installations and the system default developer directory.
 
 After READY succeeds and at the start of each subsequent new phone task,
 proactively show the screen:
-1. Prefer and reuse the native phone panel when supported. If READY does not
+1. Prefer and reuse a native phone panel confirmed to be working and visible. If READY does not
    open it automatically, call pua_screen as directed by the adapter documentation.
-2. If there is no native panel but a sidebar browser is available, open the
-   actual browser_url in that sidebar browser.
+2. If native display is unsupported, unverified, hidden, blank, or stuck loading
+   and a sidebar browser is available, proactively open the actual browser_url
+   there. A widget card or static screenshot does not prove successful display.
 3. Without a sidebar browser, provide a clickable link. Open an external
    browser only when I ask.
 Always include the actual browser_url as a clickable link in your reply.
